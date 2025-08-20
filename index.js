@@ -61,6 +61,7 @@ async function run() {
     const userCollection = client.db("noorvia").collection("users");
    const teamCollection = client.db("noorvia").collection("teamMembers");
    const performersCollection = client.db("noorvia").collection("performers");
+   const contactCollection = client.db("noorvia").collection("contacts");
     // userrelated api
 app.post('/users', async (req, res) => {
       const user = req.body;
@@ -441,6 +442,55 @@ app.delete('/performers/:id', verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ---------- Public: submit contact form ----------
+
+app.post('/contacts', async (req, res) => {
+  try {
+    const form = req.body || {};
+    // Basic validation
+    if (!form.name || !form.email || !form.subject || !form.message) {
+      return res.status(400).send({ message: 'Name, email, subject, and message are required' });
+    }
+    // Sanitize / normalize
+    const payload = {
+      name: String(form.name).trim(),
+      email: String(form.email).toLowerCase().trim(),
+      subject: String(form.subject).trim(),
+      message: String(form.message).trim(),
+      createdAt: new Date(),
+    };
+    const result = await contactCollection.insertOne(payload);
+    res.send({ insertedId: result.insertedId, message: 'Contact form submitted successfully' });
+  } catch (e) {
+    res.status(500).send({ message: 'Failed to submit contact form', error: e?.message });
+  }
+});
+
+// Get all contact submissions (admin-only)
+    app.get('/contacts', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const result = await contactCollection.find().sort({ createdAt: -1 }).toArray();
+        res.send(result);
+      } catch (e) {
+        console.error('Error fetching contacts:', e);
+        res.status(500).send({ message: 'Failed to fetch contacts' });
+      }
+    });
+
+    // Delete a contact submission (admin-only)
+    app.delete('/contacts/:id', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const _id = new ObjectId(req.params.id);
+        const result = await contactCollection.deleteOne({ _id });
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ message: 'Contact not found' });
+        }
+        res.send({ message: 'Contact deleted successfully' });
+      } catch (e) {
+        console.error('Error deleting contact:', e);
+        res.status(500).send({ message: 'Failed to delete contact' });
+      }
+    });
  
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
