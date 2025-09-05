@@ -163,6 +163,119 @@ app.post('/users', async (req, res) => {
    
 // add team member
 // ---------- Public: list all active members (sorted) ----------
+// app.get('/team', async (_req, res) => {
+//   try {
+//     const result = await teamCollection
+//       .find({ active: { $ne: false } })
+//       .sort({ order: 1, name: 1 })
+//       .toArray();
+//     res.send(result);
+//   } catch (e) {
+//     res.status(500).send({ message: 'Failed to fetch team', error: e?.message });
+//   }
+// });
+
+// // ---------- Public: get one member by id ----------
+// app.get('/team/:id', async (req, res) => {
+//   try {
+//     const _id = new ObjectId(req.params.id);
+//     const doc = await teamCollection.findOne({ _id });
+//     if (!doc) return res.status(404).send({ message: 'Member not found' });
+//     res.send(doc);
+//   } catch (e) {
+//     res.status(500).send({ message: 'Failed to fetch member', error: e?.message });
+//   }
+// });
+
+// // ---------- Admin: create member ----------
+// app.post('/team',  async (req, res) => {
+//   try {
+//     const {
+//       name, position, bio,
+//       expertise = [],
+//       image = '',
+//       order = 999,
+//       active = true,
+//       socials = {}
+//     } = req.body || {};
+
+//     if (!name || !position || !bio) {
+//       return res.status(400).send({ message: 'name, position and bio are required' });
+//     }
+
+//     const payload = {
+//       name: String(name).trim(),
+//       position: String(position).trim(),
+//       bio: String(bio).trim(),
+//       expertise: Array.isArray(expertise) ? expertise.map(s => String(s).trim()).filter(Boolean) : [],
+//       image: String(image || ''),
+//       order: Number(order) || 999,
+//       active: Boolean(active),
+//       socials: {
+//         linkedin: socials?.linkedin || '',
+//         twitter: socials?.twitter || '',
+//         website: socials?.website || ''
+//       },
+//       createdAt: new Date()
+//     };
+
+//     if (!payload.expertise.length) {
+//       return res.status(400).send({ message: 'At least one expertise is required' });
+//     }
+
+//     const result = await teamCollection.insertOne(payload);
+//     res.send({ insertedId: result.insertedId });
+//   } catch (e) {
+//     res.status(500).send({ message: 'Failed to create member', error: e?.message });
+//   }
+// });
+
+// // ---------- Admin: update member ----------
+// app.patch('/team/:id',  async (req, res) => {
+//   try {
+//     const _id = new ObjectId(req.params.id);
+//     const up = req.body || {};
+//     // sanitize a bit
+//     if (up.name) up.name = String(up.name).trim();
+//     if (up.position) up.position = String(up.position).trim();
+//     if (up.bio) up.bio = String(up.bio).trim();
+//     if (Array.isArray(up.expertise)) {
+//       up.expertise = up.expertise.map(s => String(s).trim()).filter(Boolean);
+//     }
+//     if (typeof up.order !== 'undefined') up.order = Number(up.order) || 999;
+//     if (typeof up.active !== 'undefined') up.active = Boolean(up.active);
+//     if (up.socials) {
+//       up.socials = {
+//         linkedin: up.socials?.linkedin || '',
+//         twitter: up.socials?.twitter || '',
+//         website: up.socials?.website || ''
+//       };
+//     }
+
+//     const result = await teamCollection.updateOne(
+//       { _id },
+//       { $set: { ...up, updatedAt: new Date() } }
+//     );
+
+//     res.send(result);
+//   } catch (e) {
+//     res.status(500).send({ message: 'Failed to update member', error: e?.message });
+//   }
+// });
+
+// // ---------- Admin: delete member ----------
+// app.delete('/team/:id',  async (req, res) => {
+//   try {
+//     const _id = new ObjectId(req.params.id);
+//     const result = await teamCollection.deleteOne({ _id });
+//     res.send(result);
+//   } catch (e) {
+//     res.status(500).send({ message: 'Failed to delete member', error: e?.message });
+//   }
+// });
+
+// test team member api end
+// ---------- Public: list all active members (sorted) ----------
 app.get('/team', async (_req, res) => {
   try {
     const result = await teamCollection
@@ -188,11 +301,13 @@ app.get('/team/:id', async (req, res) => {
 });
 
 // ---------- Admin: create member ----------
-app.post('/team',  async (req, res) => {
+app.post('/team', async (req, res) => {
   try {
     const {
       name, position, bio,
       expertise = [],
+      email = '',
+      phone = '',
       image = '',
       order = 999,
       active = true,
@@ -208,13 +323,15 @@ app.post('/team',  async (req, res) => {
       position: String(position).trim(),
       bio: String(bio).trim(),
       expertise: Array.isArray(expertise) ? expertise.map(s => String(s).trim()).filter(Boolean) : [],
+      email: String(email).trim(),
+      phone: String(phone).trim(),
       image: String(image || ''),
       order: Number(order) || 999,
       active: Boolean(active),
       socials: {
         linkedin: socials?.linkedin || '',
         twitter: socials?.twitter || '',
-        website: socials?.website || ''
+        facebook: socials?.facebook || ''
       },
       createdAt: new Date()
     };
@@ -231,7 +348,7 @@ app.post('/team',  async (req, res) => {
 });
 
 // ---------- Admin: update member ----------
-app.patch('/team/:id',  async (req, res) => {
+app.patch('/team/:id', async (req, res) => {
   try {
     const _id = new ObjectId(req.params.id);
     const up = req.body || {};
@@ -242,13 +359,15 @@ app.patch('/team/:id',  async (req, res) => {
     if (Array.isArray(up.expertise)) {
       up.expertise = up.expertise.map(s => String(s).trim()).filter(Boolean);
     }
+    if (up.email) up.email = String(up.email).trim();
+    if (up.phone) up.phone = String(up.phone).trim();
     if (typeof up.order !== 'undefined') up.order = Number(up.order) || 999;
     if (typeof up.active !== 'undefined') up.active = Boolean(up.active);
     if (up.socials) {
       up.socials = {
         linkedin: up.socials?.linkedin || '',
         twitter: up.socials?.twitter || '',
-        website: up.socials?.website || ''
+        facebook: up.socials?.facebook || ''
       };
     }
 
@@ -264,7 +383,7 @@ app.patch('/team/:id',  async (req, res) => {
 });
 
 // ---------- Admin: delete member ----------
-app.delete('/team/:id',  async (req, res) => {
+app.delete('/team/:id', async (req, res) => {
   try {
     const _id = new ObjectId(req.params.id);
     const result = await teamCollection.deleteOne({ _id });
